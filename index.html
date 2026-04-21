@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SmartBot — Venkat's AI Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --navy:   #0f1e35;
+    --navy2:  #162842;
+    --accent: #2e7de0;
+    --accent2:#4fa3ff;
+    --gold:   #e8a94a;
+    --white:  #ffffff;
+    --muted:  #8a9ab5;
+    --bubble-bot: #1a2f4a;
+    --radius: 18px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--white);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(46,125,224,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 100%, rgba(79,163,255,0.10) 0%, transparent 60%);
+  }
+  header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: rgba(15,30,53,0.85);
+    backdrop-filter: blur(12px);
+    flex-shrink: 0; z-index: 10;
+  }
+  .avatar {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--gold));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif; font-size: 18px; color: white;
+    flex-shrink: 0; box-shadow: 0 0 0 3px rgba(46,125,224,0.25);
+  }
+  .header-text h1 { font-family: 'DM Serif Display', serif; font-size: 17px; }
+  .header-text p  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .status-dot {
+    width: 8px; height: 8px; background: #4ade80; border-radius: 50%;
+    display: inline-block; margin-right: 5px; box-shadow: 0 0 6px #4ade80;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  #chat {
+    flex: 1; overflow-y: auto;
+    padding: 24px 20px 12px;
+    display: flex; flex-direction: column; gap: 14px;
+    scroll-behavior: smooth;
+  }
+  #chat::-webkit-scrollbar { width: 4px; }
+  #chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+  .msg { display: flex; gap: 10px; max-width: 82%; animation: fadeUp .3s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg.bot  { align-self: flex-start; }
+
+  .msg-avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; margin-top: 2px;
+  }
+  .msg.bot  .msg-avatar { background: linear-gradient(135deg,var(--accent),var(--gold)); color:#fff; font-family:'DM Serif Display',serif; }
+  .msg.user .msg-avatar { background: rgba(255,255,255,0.1); color: var(--muted); }
+
+  .bubble {
+    padding: 12px 16px; border-radius: var(--radius);
+    font-size: 14px; line-height: 1.6; word-break: break-word;
+  }
+  .msg.bot  .bubble { background: var(--bubble-bot); border: 1px solid rgba(255,255,255,0.06); border-bottom-left-radius:4px; color:#dce8f8; }
+  .msg.user .bubble { background: var(--accent); border-bottom-right-radius:4px; color:#fff; }
+
+  .welcome { text-align:center; padding:20px 10px 8px; animation:fadeUp .5s ease; }
+  .welcome .big-avatar {
+    width:64px; height:64px;
+    background: linear-gradient(135deg,var(--accent),var(--gold));
+    border-radius:50%; margin:0 auto 14px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'DM Serif Display',serif; font-size:26px; color:#fff;
+    box-shadow: 0 0 0 6px rgba(46,125,224,0.15), 0 8px 32px rgba(46,125,224,0.3);
+  }
+  .welcome h2 {
+    font-family:'DM Serif Display',serif; font-size:22px; margin-bottom:6px;
+    background:linear-gradient(135deg,#fff,var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .welcome p { font-size:13.5px; color:var(--muted); max-width:320px; margin:0 auto 20px; line-height:1.6; }
+
+  .chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:0 10px; }
+  .chip {
+    background: rgba(46,125,224,0.12); border: 1px solid rgba(46,125,224,0.3);
+    color: var(--accent2); padding:7px 14px; border-radius:20px;
+    font-size:12.5px; cursor:pointer; transition:all .2s;
+    font-family:'DM Sans',sans-serif;
+  }
+  .chip:hover { background:rgba(46,125,224,0.25); border-color:var(--accent2); transform:translateY(-1px); box-shadow:0 4px 14px rgba(46,125,224,0.2); }
+
+  .typing {
+    display:flex; align-items:center; gap:5px;
+    padding:14px 16px; background:var(--bubble-bot);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:var(--radius); border-bottom-left-radius:4px; width:fit-content;
+  }
+  .typing span { width:7px; height:7px; background:var(--muted); border-radius:50%; animation:bounce 1.2s infinite; }
+  .typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.5} 30%{transform:translateY(-5px);opacity:1} }
+
+  .input-area {
+    padding:14px 20px 20px;
+    border-top:1px solid rgba(255,255,255,0.06);
+    background:rgba(15,30,53,0.9); backdrop-filter:blur(12px); flex-shrink:0;
+  }
+  .input-row {
+    display:flex; gap:10px; align-items:flex-end;
+    background:var(--navy2); border:1px solid rgba(255,255,255,0.1);
+    border-radius:24px; padding:8px 8px 8px 18px; transition:border-color .2s;
+  }
+  .input-row:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px rgba(46,125,224,0.12); }
+  #userInput {
+    flex:1; background:transparent; border:none; outline:none;
+    color:var(--white); font-family:'DM Sans',sans-serif;
+    font-size:14px; resize:none; max-height:100px; line-height:1.5; padding:4px 0;
+  }
+  #userInput::placeholder { color:var(--muted); }
+  #sendBtn {
+    width:38px; height:38px;
+    background:linear-gradient(135deg,var(--accent),#1a5fb4);
+    border:none; border-radius:50%; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; transition:all .2s; box-shadow:0 2px 10px rgba(46,125,224,0.35);
+  }
+  #sendBtn:hover { transform:scale(1.08); box-shadow:0 4px 16px rgba(46,125,224,0.5); }
+  #sendBtn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+  #sendBtn svg { width:18px; height:18px; fill:white; }
+  .powered { text-align:center; font-size:11px; color:rgba(138,154,181,0.5); margin-top:10px; }
+
+  @media(max-width:480px){
+    .msg{max-width:92%} header{padding:12px 16px}
+    #chat{padding:16px 12px 8px} .input-area{padding:10px 12px 16px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="avatar">S</div>
+  <div class="header-text">
+    <h1>SmartBot</h1>
+    <p><span class="status-dot"></span>Venkat's Personal AI Assistant</p>
+  </div>
+</header>
+
+<div id="chat">
+  <div class="welcome">
+    <div class="big-avatar">S</div>
+    <h2>Hi, I'm SmartBot!</h2>
+    <p>Venkat's personal AI assistant. Ask me anything about his experience, skills, projects, or background.</p>
+    <div class="chips">
+      <div class="chip" onclick="askChip(this)">What is Venkat's GenAI experience?</div>
+      <div class="chip" onclick="askChip(this)">Give me a profile summary of Venkat</div>
+      <div class="chip" onclick="askChip(this)">What are his core skills?</div>
+      <div class="chip" onclick="askChip(this)">Tell me about SmartBroker</div>
+      <div class="chip" onclick="askChip(this)">What is Venkat's visa status in Ireland?</div>
+    </div>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="input-row">
+    <textarea id="userInput" rows="1" placeholder="Ask me anything about Venkat…"></textarea>
+    <button id="sendBtn" onclick="sendMessage()">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <div class="powered">Powered by OpenAI · Built by Venkat Krishnan</div>
+</div>
+
+<script>
+let conversationHistory = [];
+let isLoading = false;
+
+const textarea = document.getElementById('userInput');
+textarea.addEventListener('input', () => {
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+});
+textarea.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function askChip(el) { if (!isLoading) sendMessage(el.textContent.trim()); }
+
+function appendMsg(role, text) {
+  const chat = document.getElementById('chat');
+  const div  = document.createElement('div');
+  div.className = `msg ${role}`;
+  const av = document.createElement('div');
+  av.className = 'msg-avatar';
+  av.textContent = role === 'bot' ? 'S' : '👤';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = text.replace(/\n/g, '<br/>');
+  div.appendChild(av);
+  div.appendChild(bubble);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const div  = document.createElement('div');
+  div.className = 'msg bot'; div.id = 'typingIndicator';
+  const av = document.createElement('div');
+  av.className = 'msg-avatar'; av.textContent = 'S';
+  const t = document.createElement('div');
+  t.className = 'typing';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  div.appendChild(av); div.appendChild(t);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTyping() { const el = document.getElementById('typingIndicator'); if(el) el.remove(); }
+
+async function sendMessage(overrideText) {
+  if (isLoading) return;
+  const input = document.getElementById('userInput');
+  const text  = (overrideText || input.value).trim();
+  if (!text) return;
+
+  input.value = ''; input.style.height = 'auto';
+  const welcome = document.querySelector('.welcome');
+  if (welcome) welcome.remove();
+
+  appendMsg('user', text);
+  conversationHistory.push({ role: 'user', content: text });
+
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  showTyping();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: text,
+        history: conversationHistory
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      hideTyping();
+      appendMsg('bot', `⚠️ ${data.error}`);
+    } else {
+      const reply = data.reply;
+      conversationHistory.push({ role: 'assistant', content: reply });
+      hideTyping();
+      appendMsg('bot', reply);
+    }
+  } catch(err) {
+    hideTyping();
+    appendMsg('bot', '⚠️ Something went wrong. Please try again.');
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+</script>
+</body>
+</html>
