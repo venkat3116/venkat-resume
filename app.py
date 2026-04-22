@@ -126,20 +126,20 @@ def chat():
         data = request.json
         user_message = data.get('message', '').strip()
         conversation_history = data.get('history', [])
-        
+
         if not user_message:
             return jsonify({'error': 'Message cannot be empty'}), 400
-        
+
         # Build messages for OpenAI
         messages = [{'role': 'system', 'content': SYSTEM_PROMPT}]
-        
+
         # Add conversation history
         for msg in conversation_history:
             messages.append({'role': msg['role'], 'content': msg['content']})
-        
+
         # Add current user message
         messages.append({'role': 'user', 'content': user_message})
-        
+
         # Call OpenAI
         response = client.chat.completions.create(
             model='gpt-4o-mini',
@@ -147,14 +147,14 @@ def chat():
             max_tokens=600,
             temperature=0.7
         )
-        
+
         assistant_message = response.choices[0].message.content
-        
+
         return jsonify({'reply': assistant_message})
-    
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
+    port = int(os.getenv('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=False)
