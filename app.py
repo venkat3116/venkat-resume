@@ -2,9 +2,8 @@ from flask import Flask, render_template, request, jsonify
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
-import os
 
-# Load variables from .env file
+# Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__, template_folder='.', static_folder='.')
@@ -116,9 +115,11 @@ Here is Venkat's full resume:
 
 {RESUME}"""
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -153,7 +154,11 @@ def chat():
         return jsonify({'reply': assistant_message})
 
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error in /api/chat: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        return jsonify({'error': f'Error: {str(e)}'}), 500
+
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
