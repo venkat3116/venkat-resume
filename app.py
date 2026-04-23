@@ -13,6 +13,7 @@ api_key = os.getenv('OPENAI_API_KEY')
 if not api_key:
     raise ValueError("OPENAI_API_KEY environment variable not set!")
 
+print(f"✓ API Key loaded: {api_key[:20]}...")  # Print first 20 chars for verification
 client = OpenAI(api_key=api_key)
 
 # Resume data
